@@ -8,29 +8,30 @@
 
 ### 动机
 
-程序优化的重要性，大模型的强大能力，所以用大模型来辅助完成程序优化任务。
+程序优化在现代计算领域具有重要意义，它直接关系到软件的执行效率、资源利用率以及用户体验。在性能需求不断提高和硬件环境日益复杂的背景下，传统的优化手段往往面临规则设计繁琐、自动化程度不足等瓶颈。而大模型凭借强大的自然语言理解与生成能力，以及在模式识别和知识推理中的卓越表现，为解决这些问题提供了新的可能。通过将大模型应用于程序优化任务，我们可以探索更加智能化、自动化的优化手段，从而提升程序开发效率并实现更高效的代码性能。
 
 ### 主要构成
 
-- part1：尝试使用 api 来调用大模型，了解 api 相关的设置。了解提示工程技术。
+- part1：尝试使用 api 来调用大模型，了解 api 相关的设置，了解提示工程技术。
 - part2：尝试使用大模型来完成给定的程序优化任务，在具体的任务上对比不同 prompt 的效果。
-- part3：阅读相关论文，尝试复现其中的技术。
-- part4（选做）：尝试组合不同论文中的技术，或改进现有技术，判断效果是否有所提升。
+- part3：阅读相关论文。
+- part4：选择一个路线并进一步探索。可以根据给定的路线来探索，或者尝试复现论文并提出改进。
 
 注意：part2 和 part3 的顺序不是固定的，可以交叉完成。
 
 ### 时间安排
 
-考虑 part4：
+完成基础任务：
 - part1：1周
-- part2：1周
-- part3：1-2周
-- part4：1-2周
+- part2：1.5周
+- part3：1.5周
+- part4：1周
 
-不考虑 part4：
+分配更多时间给后续探索：
 - part1：1周
-- part2：2周
-- part3：2周
+- part2：1-1.5周
+- part3：1周
+- part4：1.5-2周
 
 
 ## part 1
@@ -41,15 +42,21 @@
 - https://platform.closeai-asia.com
 - https://platform.deepseek.com
 
-参考以下资料了解如何通过 api 调用大模型以及相关的参数设置：
-- https://openai.com/api
+参考以下资料了解如何通过 api 调用大模型以及相关的参数设置（OpenAI 和 DeepSeek 用的同一个库，所以可以先阅读 DeepSeek 文档，了解基本设置）：
 - https://api-docs.deepseek.com/zh-cn
+- https://platform.openai.com/docs
+- https://cookbook.openai.com/
 
-主要的参数包括：
-- system
-- user
-- temperature
-- 概率
+主要的设置包括：
+- message：https://api-docs.deepseek.com/zh-cn/
+    - role
+    - content
+- temperature：https://api-docs.deepseek.com/zh-cn/quick_start/parameter_settings
+- logprobs: https://cookbook.openai.com/examples/using_logprobs & https://api-docs.deepseek.com/zh-cn/api/create-chat-completion
+- 对话补全：https://api-docs.deepseek.com/zh-cn/api/create-chat-completion
+- JSON Output：https://api-docs.deepseek.com/zh-cn/guides/json_mode
+- 上下文硬盘缓存：https://api-docs.deepseek.com/zh-cn/guides/kv_cache
+- ...
 
 尝试编写脚本来通过 api 调用大模型，尝试调整输入的参数以及获取输出的各类信息。
 
@@ -59,7 +66,7 @@
 - 如果 commit 集中来自于一个或多个代码库，可以考虑将整个代码库下载到本地，并且直接从 git 信息中获取需要的部分
 - 如果 commit 分散在许多不同的代码库，可以考虑直接调用 GitHub api，获取对应的 commit 信息。GitHub api 有调用频率的限制，主要有以下几种解决方法。
     - 多注册几个账号获得更多的 key
-    - 纯等待，每调用一次之后 sleep(n)
+    - 纯等待，例如每调用一次 api 之后 sleep(n)
     - 改用第一种方法
 
 ### 1.3
@@ -71,7 +78,7 @@
 
 ## part 2
 
-给定一个task和一些prompt技术，尝试通过api调用大模型并完成程序优化。
+给定一些task和一些prompt技术，尝试通过api调用大模型并完成程序优化。
 
 任务：
 - 判断一个commit是否为性能优化
@@ -101,8 +108,39 @@
             - 若代码库中包含 performance test，尝试运行
             - 人工判断
 
-------- 可以在完成以上部分后先跳到 part3，阅读现有论文并有一定了解后，继续完成下面的部分 -------
 
+
+## part 3
+
+给定一些现有工作，阅读论文。可以先粗略过一遍所有论文，然后在优化小规模代码 / 大规模代码中选择一个感兴趣的方向进行精读。后续的 part4 也将在选择的方向上继续进行。
+
+现有论文：
+- 优化大规模代码
+    - 同一个作者的前后两篇连续的工作
+        - DeepDev-PERF：https://dl.acm.org/doi/abs/10.1145/3540250.3549096
+        - RAPGen：https://arxiv.org/abs/2306.17077
+    - performance bug
+        - TANDEM: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9110902
+        - A Large-Scale Empirical Study of Real-Life Performance Issues in Open Source Projects：https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9757842
+- 优化小规模代码（算法竞赛题） - PIE 和 SBLLM 是比较主要的论文。
+    - PIE：https://arxiv.org/abs/2302.07867
+    - Learning to Improve Code Efficiency：https://arxiv.org/abs/2208.05297
+    - Supersonic：https://ieeexplore.ieee.org/abstract/document/10606318/
+    - SBLLM：https://arxiv.org/abs/2408.12159
+
+
+
+## part 4（在 4.1.1 / 4.1.2 / 4.2 中选择一个方向完成）
+
+4.1 考虑优化大规模代码，4.2 考虑优化小规模代码（算法竞赛题）
+
+### 4.1
+
+考虑优化大规模代码，主要方式有以下两种：
+- 4.1.1：遵循现有路线，进一步向下探索
+- 4.1.2：复现论文中的工具，自行提出一些改进策略并实现
+
+#### 4.1.1
 - 在不同 commit 之间交叉对比，寻找共同点
     - 分析不同 commit 实现的优化类型
     - 寻找优化方向类似的 commit
@@ -115,39 +153,22 @@
         - 该优化方式的总结，例如将 A 替换成 B
         - 该类优化的一个或多个具体例子，例如一段现有的代码（包含 A）和对应的优化后代码（包含 B）
 
+#### 4.1.2
 
+参考 part3 中给出的论文，复现现有的优化大规模代码的工具。
 
-
-## part 3
-
-给定一些现有工作，阅读论文，然后尝试复现其中的技术。
-
-现有论文：
-- 优化小规模代码（竞赛题） - 不是目前的主要方向，了解即可。PIE 和 SBLLM 是比较主要的论文。
-    - PIE：https://arxiv.org/abs/2302.07867
-    - Learning to Improve Code Efficiency：https://arxiv.org/abs/2208.05297
-    - Supersonic：https://ieeexplore.ieee.org/abstract/document/10606318/
-    - SBLLM：https://arxiv.org/abs/2408.12159
-- 优化大规模代码 - 是目前的主要方向，以下是同一个作者的前后两篇连续的工作
-    - DeepDev-PERF：https://dl.acm.org/doi/abs/10.1145/3540250.3549096
-    - RAPGen：https://arxiv.org/abs/2306.17077
+尝试组合不同论文中的技术，或改进现有技术，判断效果是否有所提升。
 
 但目前想要复现可能还有一些额外的困难，例如 RAPGen 中需要构建知识库，就涉及到从 GitHub 爬所有相关的代码库，并在 commit 中筛选出所有实现了 api 替换的部分，需要调用程序分析工具等。并且 C# 的代码库数量较少，而 C/C++ 的代码库数量超级多。
 
+### 4.2
 
-
-
-## part 4（选做）
+参考 part3 中给出的论文，复现现有的优化小规模代码（算法竞赛题）的工具
 
 尝试组合不同论文中的技术，或改进现有技术，判断效果是否有所提升。
 
 
 ## TODO
 
-- 完善动机部分
-- 完善1.1的主要参数部分
-- 完善api参考资料部分，例如给出OpenAI官方关于每个参数的具体页面
 - 完善part2，例如给出具体用于优化的commit等
-- 考虑将part2的后半段放到part4中
-- 考虑增加优化算法题的路线，这样就分成两条路线，要不优化算法题，要不优化大规模代码库中的一个部分
 - 考虑每个part新建一个文件，将readme拆分到不同文件中？
