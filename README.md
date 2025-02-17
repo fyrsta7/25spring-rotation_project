@@ -37,9 +37,28 @@
 ## part 1
 
 在开展具体的项目之前，我们需要了解并尝试使用基本的工具。该部分的构成如下：
+- 1.0：简单学习 Git 以及命令行的使用
 - 1.1：尝试使用 api 来调用大模型，了解 api 相关的设置
 - 1.2：了解提示工程技术
 - 1.3：尝试获取代码库中的 commit 信息
+
+### 1.0
+
+（有任何问题都可以先问大模型）
+
+- 学习命令行的基本使用方式
+    - 参考 https://missing-semester-cn.github.io/2020/shell-tools/
+- 运行 python 脚本
+    - 在本地配置 python 环境，并尝试在命令行运行 `python hello_world.py`
+    - 如果需要的话，可以尝试使用 pyenv 工具管理 python 版本。
+- 学习 Git
+    - 参考 https://missing-semester-cn.github.io/2020/version-control/
+    - 了解如何进行简单的版本管理
+- 了解 GitHub 的主要用法，例如可以从以下几个问题入手
+    - 配置环境，并在命令行使用 `git clone` 来下载代码，例如可以下载本项目。尝试使用 `git pull` 来获取代码库的更新。
+    - 尝试在 GitHub 网页上查看 commit 信息。
+    - 尝试在 GitHub 上创建仓库，并使用 `git push` 将本地的代码同步更新到 GitHub。
+        - 注意：如果你需要在本项目的基础上进行修改，并希望将代码保存到 GitHub，请另外新开一个仓库来存储你自己的代码，而不要直接修改本项目对应的仓库。例如你可以使用 GitHub 上的 fork。
 
 ### 1.1
 
