@@ -38,14 +38,21 @@
 
 在开展具体的项目之前，我们需要了解并尝试使用基本的工具。该部分的构成如下：
 - 1.1：尝试使用 api 来调用大模型，了解 api 相关的设置
-- 1.2：尝试获取代码库中的 commit 信息
-- 1.3：了解提示工程技术
+- 1.2：了解提示工程技术
+- 1.3：尝试获取代码库中的 commit 信息
 
 ### 1.1
 
-目前我们主要使用 OpenAI 以及 DeepSeek 的大模型（由于国内无法直接使用 OpenAI 的 api，所以我们使用 api 代理平台），具体网站如下：
-- https://platform.closeai-asia.com
-- https://platform.deepseek.com
+#### 1.1.1 - 尝试使用 api 来调用大模型
+
+使用组内的[大模型门户](https://llm.xmcp.ltd/)来获取 api key，目前可以调用 DeepSeek、通义千问、OpenAI 等模型，每位同学的限额是每月100刀。
+
+`test_api.py` 中是一个简单的大模型调用示例。
+你需要先创建 `config.py` 文件，将大模型调用相关的变量（包括 `xmcp_base_url`, `xmcp_api_key`, `xmcp_model`）放在里面。注意保护好自己的 api key，防止泄露。如果要在 GitHub 上存放项目，注意不要将 api key 同步更新上去。
+然后你可以使用 `python test_api.py` 来运行 `test_api.py`。
+
+
+#### 1.1.2 - 了解 api 相关的设置
 
 参考以下资料了解如何通过 api 调用大模型以及相关的参数设置（OpenAI 和 DeepSeek 用的同一个库，所以可以先阅读 DeepSeek 文档，了解基本设置）：
 - https://api-docs.deepseek.com/zh-cn
@@ -65,16 +72,8 @@
 
 尝试编写脚本来通过 api 调用大模型，尝试调整输入的参数以及获取输出的各类信息。
 
-### 1.2
 
-编写脚本，在给定代码库以及 commit hash 后，自动获取 commit 中的所有信息。主要有以下两种思路：
-- （后续主要用到的方案）如果 commit 集中来自于一个或多个代码库，可以考虑将整个代码库下载到本地，并且直接从 git 信息中获取需要的部分
-- 如果 commit 分散在许多不同的代码库，可以考虑直接调用 GitHub api，获取对应的 commit 信息。GitHub api 有调用频率的限制，主要有以下几种解决方法。
-    - 多注册几个账号获得更多的 key
-    - 纯等待，例如每调用一次 api 之后 sleep(n)
-    - 改用第一种方法
-
-### 1.3
+### 1.2 - 了解提示工程技术
 
 参考以下资料了解提示工程技术：
 - https://www.promptingguide.ai/zh
@@ -89,6 +88,17 @@
     - https://arxiv.org/abs/2005.11401: 提出 RAG 技术的论文
         - https://blog.csdn.net/weixin_43221845/article/details/142610477: 随便找的一个论文解读
 - ...
+
+
+### 1.3 - 尝试获取代码库中的 commit 信息
+
+编写脚本，在给定代码库以及 commit hash 后，自动获取 commit 中的所有信息。主要有以下两种思路：
+- （后续主要用到的方案）如果 commit 集中来自于一个或多个代码库，可以考虑将整个代码库下载到本地，并且直接从 git 信息中获取需要的部分
+- 如果 commit 分散在许多不同的代码库，可以考虑直接调用 GitHub api，获取对应的 commit 信息。GitHub api 有调用频率的限制，主要有以下几种解决方法。
+    - 多注册几个账号获得更多的 key
+    - 纯等待，例如每调用一次 api 之后 sleep(n)
+    - 改用第一种方法
+
 
 ## part 2
 
