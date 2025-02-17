@@ -2,7 +2,7 @@
 
 本仓库是熊英飞老师组为 2025 年北京大学图灵班轮转设计的实践项目之一，主要涉及和大模型相关的程序优化技术。
 
-如果在完成项目的过程中遇到了任何问题，请随时通过微信或者邮件 (zhaoyuwei@stu.pku.edu.cn) 与负责的同学联系。
+如果在完成项目的过程中遇到了任何问题，请随时通过微信或者邮件 (zhaoyuwei@stu.pku.edu.cn) 与负责的同学联系。另外，请大家善用大模型，可以解决大家在写代码时遇到的很多问题。
 
 ## 项目概述
 
@@ -45,10 +45,10 @@
 
 #### 1.1.1 - 尝试使用 api 来调用大模型
 
-使用组内的[大模型门户](https://llm.xmcp.ltd/)来获取 api key，目前可以调用 DeepSeek、通义千问、OpenAI 等模型，每位同学的限额是每月100刀。
+使用组内的[大模型门户](https://llm.xmcp.ltd/)来获取 api key，目前可以调用 DeepSeek、通义千问、OpenAI 等模型，每位同学的限额是每月100刀。组内统一报销费用，只能用于自己的科研轮转项目，不能转借或者倒卖。
 
 `test_api.py` 中是一个简单的大模型调用示例。
-你需要先创建 `config.py` 文件，将大模型调用相关的变量（包括 `xmcp_base_url`, `xmcp_api_key`, `xmcp_model`）放在里面。注意保护好自己的 api key，防止泄露。如果要在 GitHub 上存放项目，注意不要将 api key 同步更新上去。
+你需要先创建 `config.py` 文件，将大模型调用相关的变量（包括 `xmcp_base_url`, `xmcp_api_key`, `xmcp_model`）放在里面。注意保护好自己的 api key，防止泄露。如果要在 GitHub 上存放项目，注意不要将 api key 同步更新上去。如果发现 api key 有可能已经泄露，请立刻联系管理员充值秘钥。
 然后你可以使用 `python test_api.py` 来运行 `test_api.py`。
 
 
