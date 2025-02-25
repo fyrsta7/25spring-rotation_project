@@ -150,7 +150,7 @@
 
 在这一部分中，提供两类 comimt 可用于优化。你可以先从第一类中挑选几个并尝试优化，然后再考虑第二类中的 commit。
 - 第一类 commit 来自[RAPGen](https://arxiv.org/abs/2306.17077)，这里的每个 commit 中都只做了 api 调用层面的修改。具体内容放在文件 `part2/rapgen_benchmark.json` 中，每个 commit 包含三方面信息，分别是所在的代码库，对应的 commit hash，以及被修改的文件名。
-- 第二类 commit 来自[RocksDB](https://github.com/facebook/rocksdb)，这里的每个 commit 都只修改了一个函数。具体内容放在文件 `part2/rocksdb_benchmark.json` 中（但其中可能有一些错误，部分 commit 可能修改了不止一个函数，直接跳过即可。每个 commit 对应的 `github_commit_url` 字段是该 commit 所在的网址，可以直接在网页上确认该 commit 一共修改了哪些内容。）理论上来说，你可以在 part2.1 的基础上进一步做筛选，最终得到这里用到的 comimt，例如筛选出只修改了一个文件中一个函数的 commit，但这些步骤比较繁琐，在此就直接跳过。
+- 第二类 commit 来自[RocksDB](https://github.com/facebook/rocksdb)，这里的每个 commit 都只修改了一个函数。具体内容放在文件 `part2/rocksdb_benchmark.json` 中（但其中可能有一些错误，部分 commit 可能修改了不止一个函数，直接跳过即可。每个 commit 对应的 `github_commit_url` 字段是该 commit 所在的网址，可以直接在网页上确认该 commit 一共修改了哪些内容。）理论上来说，你可以在 part2.1 的基础上进一步做筛选，最终得到这里用到的 commit，例如筛选出只修改了一个文件中一个函数的 commit，但这些步骤比较繁琐，在此就直接跳过。
 
 另外，在 2.2.3 中我们会判断优化后代码的正确性，包括语义是否保持不变以及是否实现了性能提升这两部分。
 无论我们以何种方式实现代码优化，都需要在得到结果后进行判断，所以 2.2.3 的任务应该与 2.2.1 & 2.2.2 相结合。
