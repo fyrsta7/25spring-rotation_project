@@ -1,13 +1,87 @@
 [
     {
-        "hash": "21db55f8164d2a6519dcc993f74bf7f49c700854",
-        "author": "Hui Xiao",
-        "date": "2024-07-17T13:39:14-07:00",
-        "message": "Move WAL sync before memtable insertion (#12869)\n\nSummary:\n**Context/Summary:**\nWAL sync currently happens after memtable write. This causes inconvenience in stress test as we can't simply rollback the ExpectedState when write fails due to injected WAL sync error so something complicated like https://github.com/facebook/rocksdb/pull/12838 might be needed. After moving WAL sync before memtable insertion, there should not be injected IO error after memtable insertion so we can keep the current simple way of handling failed write in stress test with ExpectedState rollback.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/12869\n\nTest Plan:\n1. Below command failed with `iterator has key 0000000000000207000000000000012B0000000000000013, but expected state does not.` before this PR and passes after\n```\n./db_stress  --WAL_size_limit_MB=0 --WAL_ttl_seconds=0 --acquire_snapshot_one_in=10000 --adaptive_readahead=1 --adm_policy=1 --advise_random_on_open=0 --allow_concurrent_memtable_write=0 --allow_data_in_errors=True --allow_fallocate=0 --async_io=0 --auto_readahead_size=0 --avoid_flush_during_recovery=0 --avoid_flush_during_shutdown=0 --avoid_unnecessary_blocking_io=0 --backup_max_size=104857600 --backup_one_in=0 --batch_protection_bytes_per_key=0 --bgerror_resume_retry_interval=1000000 --block_align=1 --block_protection_bytes_per_key=4 --block_size=16384 --bloom_before_level=4 --bloom_bits=56.810257702625165 --bottommost_compression_type=none --bottommost_file_compaction_delay=0 --bytes_per_sync=262144 --cache_index_and_filter_blocks=1 --cache_index_and_filter_blocks_with_high_priority=1 --cache_size=8388608 --cache_type=auto_hyper_clock_cache --charge_compression_dictionary_building_buffer=1 --charge_file_metadata=1 --charge_filter_construction=1 --charge_table_reader=0 --check_multiget_consistency=0 --check_multiget_entity_consistency=1 --checkpoint_one_in=10000 --checksum_type=kxxHash --clear_column_family_one_in=0 --column_families=1 --compact_files_one_in=1000 --compact_range_one_in=1000 --compaction_pri=4 --compaction_readahead_size=1048576 --compaction_ttl=10 --compress_format_version=1 --compressed_secondary_cache_ratio=0.0 --compressed_secondary_cache_size=0 --compression_checksum=0 --compression_max_dict_buffer_bytes=0 --compression_max_dict_bytes=0 --compression_parallel_threads=1 --compression_type=none --compression_use_zstd_dict_trainer=0 --compression_zstd_max_train_bytes=0 --continuous_verification_interval=0 --daily_offpeak_time_utc=04:00-08:00 --data_block_index_type=1 --db=/dev/shm/rocksdb_test/rocksdb_crashtest_blackbox --db_write_buffer_size=0 --default_temperature=kWarm --default_write_temperature=kCold --delete_obsolete_files_period_micros=30000000 --delpercent=0 --delrangepercent=0 --destroy_db_initially=0 --detect_filter_construct_corruption=0 --disable_file_deletions_one_in=10000 --disable_manual_compaction_one_in=1000000 --disable_wal=0 --dump_malloc_stats=0 --enable_checksum_handoff=1 --enable_compaction_filter=0 --enable_custom_split_merge=0 --enable_do_not_compress_roles=0 --enable_index_compression=1 --enable_memtable_insert_with_hint_prefix_extractor=0 --enable_pipelined_write=0 --enable_sst_partitioner_factory=0 --enable_thread_tracking=0 --enable_write_thread_adaptive_yield=0 --error_recovery_with_no_fault_injection=1 --exclude_wal_from_write_fault_injection=1 --expected_values_dir=/dev/shm/rocksdb_test/rocksdb_crashtest_expected --fail_if_options_file_error=1 --fifo_allow_compaction=0 --file_checksum_impl=crc32c --fill_cache=1 --flush_one_in=1000000 --format_version=3 --get_all_column_family_metadata_one_in=1000000 --get_current_wal_file_one_in=0 --get_live_files_apis_one_in=1000000 --get_properties_of_all_tables_one_in=1000000 --get_property_one_in=100000 --get_sorted_wal_files_one_in=0 --hard_pending_compaction_bytes_limit=274877906944 --high_pri_pool_ratio=0.5 --index_block_restart_interval=4 --index_shortening=2 --index_type=0 --ingest_external_file_one_in=0 --initial_auto_readahead_size=16384 --inplace_update_support=0 --iterpercent=50 --key_len_percent_dist=1,30,69 --key_may_exist_one_in=100 --last_level_temperature=kWarm --level_compaction_dynamic_level_bytes=1 --lock_wal_one_in=10000 --log_file_time_to_roll=60 --log_readahead_size=16777216 --long_running_snapshots=1 --low_pri_pool_ratio=0 --lowest_used_cache_tier=0 --manifest_preallocation_size=0 --manual_wal_flush_one_in=0 --mark_for_compaction_one_file_in=10 --max_auto_readahead_size=16384 --max_background_compactions=1 --max_bytes_for_level_base=67108864 --max_key=100000 --max_key_len=3 --max_log_file_size=1048576 --max_manifest_file_size=32768 --max_sequential_skip_in_iterations=1 --max_total_wal_size=0 --max_write_batch_group_size_bytes=16 --max_write_buffer_number=10 --max_write_buffer_size_to_maintain=8388608 --memtable_insert_hint_per_batch=1 --memtable_max_range_deletions=0 --memtable_prefix_bloom_size_ratio=0.01 --memtable_protection_bytes_per_key=1 --memtable_whole_key_filtering=1 --memtablerep=skip_list --metadata_charge_policy=1 --metadata_read_fault_one_in=32 --metadata_write_fault_one_in=0 --min_write_buffer_number_to_merge=1 --mmap_read=1 --mock_direct_io=False --nooverwritepercent=1 --num_file_reads_for_auto_readahead=1 --open_files=-1 --open_metadata_read_fault_one_in=0 --open_metadata_write_fault_one_in=0 --open_read_fault_one_in=0 --open_write_fault_one_in=0 --ops_per_thread=100000000 --optimize_filters_for_hits=1 --optimize_filters_for_memory=1 --optimize_multiget_for_io=1 --paranoid_file_checks=0 --partition_filters=0 --partition_pinning=3 --pause_background_one_in=1000000 --periodic_compaction_seconds=2 --prefix_size=7 --prefixpercent=0 --prepopulate_block_cache=0 --preserve_internal_time_seconds=0 --progress_reports=0 --promote_l0_one_in=0 --read_amp_bytes_per_bit=0 --read_fault_one_in=1000 --readahead_size=524288 --readpercent=0 --recycle_log_file_num=1 --reopen=0 --report_bg_io_stats=0 --reset_stats_one_in=1000000 --sample_for_compression=0 --secondary_cache_fault_one_in=0 --set_options_one_in=0 --skip_stats_update_on_db_open=1 --snapshot_hold_ops=100000 --soft_pending_compaction_bytes_limit=68719476736 --sqfc_name=foo --sqfc_version=0 --sst_file_manager_bytes_per_sec=104857600 --sst_file_manager_bytes_per_truncate=0 --stats_dump_period_sec=10 --stats_history_buffer_size=0 --strict_bytes_per_sync=1 --subcompactions=4 --sync=1 --sync_fault_injection=0 --table_cache_numshardbits=6 --target_file_size_base=16777216 --target_file_size_multiplier=1 --test_batches_snapshots=0 --top_level_index_pinning=2 --uncache_aggressiveness=239 --universal_max_read_amp=-1 --unpartitioned_pinning=1 --use_adaptive_mutex=1 --use_adaptive_mutex_lru=1 --use_attribute_group=0 --use_delta_encoding=0 --use_direct_io_for_flush_and_compaction=0 --use_direct_reads=0 --use_full_merge_v1=0 --use_get_entity=0 --use_merge=0 --use_multi_cf_iterator=0 --use_multi_get_entity=0 --use_multiget=0 --use_put_entity_one_in=0 --use_sqfc_for_range_queries=1 --use_timed_put_one_in=0 --use_write_buffer_manager=0 --user_timestamp_size=0 --value_size_mult=32 --verification_only=0 --verify_checksum=1 --verify_checksum_one_in=1000000 --verify_compression=0 --verify_db_one_in=100000 --verify_file_checksums_one_in=1000000 --verify_iterator_with_expected_state_one_in=5 --verify_sst_unique_id_in_manifest=1 --wal_bytes_per_sync=0 --wal_compression=none --write_buffer_size=33554432 --write_dbid_to_manifest=0 --write_fault_one_in=128 --writepercent=50\n\nReviewed By: jowlyzhang\n\nDifferential Revision: D59825730\n\nPulled By: hx235\n\nfbshipit-source-id: 7d77aaf177ded2f99bf1ce19f5a4bd0783b9ca92",
+        "hash": "e48ccc28f4eebcc05b6333b129ee5908214d3259",
+        "author": "Peter Dillinger",
+        "date": "2025-01-02T10:48:46-08:00",
+        "message": "Reduce unnecessary manifest data when no file checksum (#13250)\n\nSummary:\nDon't write file checksum manifest entries when unused, to avoid using extra manifest file space.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/13250\n\nTest Plan: very minor performance improvement, existing tests\n\nReviewed By: cbi42\n\nDifferential Revision: D67653954\n\nPulled By: pdillinger\n\nfbshipit-source-id: 9156e093ed5e4a5152cc55354a4beea9a841b89f",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/21db55f8164d2a6519dcc993f74bf7f49c700854",
         "modified_files": [
-            "db/db_impl/db_impl_write.cc"
+            "db/version_edit.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/e48ccc28f4eebcc05b6333b129ee5908214d3259",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "VersionEdit::EncodeTo"
+        ]
+    },
+    {
+        "hash": "92ad4a88f3199b013532b37d6598c442319355a5",
+        "author": "Changyu Bi",
+        "date": "2024-08-27T13:57:40-07:00",
+        "message": "Small CPU optimization in InlineSkipList::Insert() (#12975)\n\nSummary:\nreuse decode key in more places to avoid decoding length prefixed key x->Key().\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/12975\n\nTest Plan:\nran benchmarks simultaneously for \"before\" and \"after\"\n* fillseq:\n```\n(for I in $(seq 1 50); do ./db_bench --benchmarks=fillseq --disable_auto_compactions=1 --min_write_buffer_number_to_merge=100 --max_write_buffer_number=1000  --write_buffer_size=268435456 --num=5000000 --seed=1723056275 --disable_wal=1 2>&1 | grep \"fillseq\"\ndone;) | awk '{ t += $5; c++; print } END { printf (\"%9.3f\\n\", 1.0 * t / c) }';\n\nbefore: 1483191\nafter: 1490555 (+0.5%)\n```\n\n* fillrandom:\n```\n(for I in $(seq 1 2); do ./db_bench_imain --benchmarks=fillrandom --disable_auto_compactions=1 --min_write_buffer_number_to_merge=100 --max_write_buffer_number=1000  --write_buffer_size=268435456 --num=2500000 --seed=1723056275 --disable_wal=1 2>&1 | grep \"fillrandom\"\n\nbefore: 255463\nafter: 256128 (+0.26%)\n```\n\nReviewed By: anand1976\n\nDifferential Revision: D61835340\n\nPulled By: cbi42\n\nfbshipit-source-id: 70345510720e348bacd51269acb5d2dd5a62bf0a",
+        "modified_files_count": 1,
+        "modified_files": [
+            "memtable/inlineskiplist.h"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/92ad4a88f3199b013532b37d6598c442319355a5",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "compare_"
+        ]
+    },
+    {
+        "hash": "5c456c4c08ac046429c38792d242dd095c50b049",
+        "author": "SGZW",
+        "date": "2024-08-09T15:05:02-07:00",
+        "message": "fix compaction speedup for marked files ut (#12912)\n\nSummary: Pull Request resolved: https://github.com/facebook/rocksdb/pull/12912\n\nReviewed By: hx235\n\nDifferential Revision: D60973460\n\nPulled By: cbi42\n\nfbshipit-source-id: ebaa343757f09f7281884a512ebe3a7d6845c8b3",
+        "modified_files_count": 1,
+        "modified_files": [
+            "db/column_family_test.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/5c456c4c08ac046429c38792d242dd095c50b049",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "TEST_P"
+        ]
+    },
+    {
+        "hash": "1fa5dff7d1ce7be64555e7bdc8371be562b3eac6",
+        "author": "奏之章",
+        "date": "2024-02-27T15:23:54-08:00",
+        "message": "WriteThread::EnterAsBatchGroupLeader reorder writers (#12138)\n\nSummary:\nReorder writers list to allow a leader can take as more commits as possible to maximize the throughput of the system and reduce IOPS.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/12138\n\nReviewed By: hx235\n\nDifferential Revision: D53955592\n\nPulled By: ajkr\n\nfbshipit-source-id: 4d899d038faef691b63801d9d85f5cc079b7bbb5",
+        "modified_files_count": 1,
+        "modified_files": [
+            "db/write_thread.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/1fa5dff7d1ce7be64555e7bdc8371be562b3eac6",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "WriteThread::EnterAsBatchGroupLeader"
+        ]
+    },
+    {
+        "hash": "cd21e4e69d76ec4ec3b080c8cdae016ac2309cc5",
+        "author": "Levi Tamasi",
+        "date": "2023-12-13T17:34:18-08:00",
+        "message": "Some further cleanup in WriteBatchWithIndex::MultiGetFromBatchAndDB (#12143)\n\nSummary:\nPull Request resolved: https://github.com/facebook/rocksdb/pull/12143\n\nhttps://github.com/facebook/rocksdb/pull/11982 changed `WriteBatchWithIndex::MultiGetFromBatchDB` to preallocate space in the `autovector`s `key_contexts` and `merges` in order to prevent any reallocations, both as an optimization and in order to prevent pointers into the container from being invalidated during subsequent insertions. On second thought, this preallocation can actually be a pessimization in cases when only a small subset of keys require querying the underlying database. To prevent any memory regressions, the PR reverts this preallocation. In addition, it makes some small code hygiene improvements like incorporating the `PinnableWideColumns` object into `MergeTuple`.\n\nReviewed By: jaykorean\n\nDifferential Revision: D52136513\n\nfbshipit-source-id: 21aa835084433feab27b501d9d1fc5434acea609",
+        "modified_files_count": 1,
+        "modified_files": [
+            "utilities/write_batch_with_index/write_batch_with_index.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/cd21e4e69d76ec4ec3b080c8cdae016ac2309cc5",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "WriteBatchWithIndex::MultiGetFromBatchAndDB"
         ]
     },
     {
@@ -16,20 +90,15 @@
         "date": "2023-08-07T12:29:31-07:00",
         "message": "compute compaction score once for a batch of range file deletes (#10744)\n\nSummary:\nOnly re-calculate compaction score once for a batch of deletions. Fix performance regression brought by https://github.com/facebook/rocksdb/pull/8434.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/10744\n\nTest Plan:\nIn one of our production cluster that recently upgraded to RocksDB 6.29, it takes more than 10 minutes to delete files in 30,000 ranges. The RocksDB instance contains approximately 80,000 files. After this patch, the duration reduces to 100+ ms, which is on par with RocksDB 6.4.\n\nCherry-picking downstream PR: https://github.com/tikv/rocksdb/pull/316\n\nSigned-off-by: tabokie <xy.tao@outlook.com>\n\nReviewed By: cbi42\n\nDifferential Revision: D48002581\n\nPulled By: ajkr\n\nfbshipit-source-id: 7245607ee3ad79c53b648a6396c9159f166b9437",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/d2b0652b32b8671c9ec4057e6da2fa564d1cc610",
         "modified_files": [
             "db/db_impl/db_impl.cc"
-        ]
-    },
-    {
-        "hash": "687a2a0d9ad5b0a3588e331ecd15317f3384def0",
-        "author": "Andrew Kryczka",
-        "date": "2023-06-02T16:39:14-07:00",
-        "message": "Small improvements to DBGet microbenchmark (#11498)\n\nSummary:\nFollow a couple best practices:\n\n- Allowed Google benchmark to decide number of iterations. Previously we hardcoded a value, which circumvented benchmark's heuristic for iterating until the result is stable.\n- Made each iteration do similar work. Previously, an iteration could do different work depending if the key was found in the first, second, third, or no L0 file.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/11498\n\nTest Plan: none as I am unable to prove it is better\n\nReviewed By: hx235\n\nDifferential Revision: D46339050\n\nPulled By: ajkr\n\nfbshipit-source-id: fcfc6da4111c5b3ae86d79d908afc5f61f96675b",
-        "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/687a2a0d9ad5b0a3588e331ecd15317f3384def0",
-        "modified_files": [
-            "microbench/db_basic_bench.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/d2b0652b32b8671c9ec4057e6da2fa564d1cc610",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "DBImpl::DeleteFilesInRanges"
         ]
     },
     {
@@ -38,9 +107,15 @@
         "date": "2022-07-06T09:30:25-07:00",
         "message": "Updated NewDataBlockIterator to not fetch compression dict for non-da… (#10310)\n\nSummary:\n…ta blocks\n\nDuring MyShadow testing, ajkr helped me find out that with partitioned index and dictionary compression enabled, `PartitionedIndexIterator::InitPartitionedIndexBlock()` spent considerable amount of time (1-2% CPU) on fetching uncompression dictionary. Fetching uncompression dict was not needed since the index blocks were not compressed (and even if they were, they use empty dictionary). This should only affect use cases with partitioned index, dictionary compression and without uncompression dictionary pinned. This PR updates NewDataBlockIterator to not fetch uncompression dictionary when it is not for data blocks.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/10310\n\nTest Plan:\n1. `make check`\n2. Perf benchmark: 1.5% (143950 -> 146176) improvement in op/sec for partitioned index + dict compression benchmark.\nFor default config without partitioned index and without dict compression, there is no regression in readrandom perf from multiple runs of db_bench.\n\n```\n# Set up for partitioned index with dictionary compression\nTEST_TMPDIR=/dev/shm ./db_bench_main -benchmarks=filluniquerandom,compact -max_background_jobs=24 -memtablerep=vector -allow_concurrent_memtable_write=false -partition_index=true  -compression_max_dict_bytes=16384 -compression_zstd_max_train_bytes=1638400\n\n# Pre PR\nTEST_TMPDIR=/dev/shm ./db_bench_main -use_existing_db=true -benchmarks=readrandom[-X50] -partition_index=true\nreadrandom [AVG    50 runs] : 143950 (± 1108) ops/sec;   15.9 (± 0.1) MB/sec\nreadrandom [MEDIAN 50 runs] : 144406 ops/sec;   16.0 MB/sec\n\n# Post PR\nTEST_TMPDIR=/dev/shm ./db_bench_opt -use_existing_db=true -benchmarks=readrandom[-X50] -partition_index=true\nreadrandom [AVG    50 runs] : 146176 (± 1121) ops/sec;   16.2 (± 0.1) MB/sec\nreadrandom [MEDIAN 50 runs] : 146014 ops/sec;   16.2 MB/sec\n\n# Set up for no partitioned index and no dictionary compression\nTEST_TMPDIR=/dev/shm/baseline ./db_bench_main -benchmarks=filluniquerandom,compact -max_background_jobs=24 -memtablerep=vector -allow_concurrent_memtable_write=false\n# Pre PR\nTEST_TMPDIR=/dev/shm/baseline/ ./db_bench_main --use_existing_db=true \"--benchmarks=readrandom[-X50]\"\nreadrandom [AVG    50 runs] : 158546 (± 1000) ops/sec;   17.5 (± 0.1) MB/sec\nreadrandom [MEDIAN 50 runs] : 158280 ops/sec;   17.5 MB/sec\n\n# Post PR\nTEST_TMPDIR=/dev/shm/baseline/ ./db_bench_opt --use_existing_db=true \"--benchmarks=readrandom[-X50]\"\nreadrandom [AVG    50 runs] : 161061 (± 1520) ops/sec;   17.8 (± 0.2) MB/sec\nreadrandom [MEDIAN 50 runs] : 161596 ops/sec;   17.9 MB/sec\n```\n\nReviewed By: ajkr\n\nDifferential Revision: D37631358\n\nPulled By: cbi42\n\nfbshipit-source-id: 6ca2665e270e63871968e061ba4a99d3136785d9",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/f9cfc6a808c9dc3ab7366edb10368559155d5172",
         "modified_files": [
             "table/block_based/block_based_table_reader_impl.h"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/f9cfc6a808c9dc3ab7366edb10368559155d5172",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "BlockBasedTable::NewDataBlockIterator"
         ]
     },
     {
@@ -49,53 +124,83 @@
         "date": "2022-06-15T13:08:11-07:00",
         "message": "Change the instruction used for a pause on arm64 (#10118)\n\nSummary:\nWhile the yield instruction conseptually sounds correct on most platforms it is\na simple nop that doesn't delay the execution anywhere close to what an x86\npause instruction does. In other projects with spin-wait loops an isb has been\nobserved to be much closer to the x86 behavior.\n\nOn a Graviton3 system the following test improves on average by 2x with this\nchange averaged over 20 runs:\n\n```\n./db_bench  -benchmarks=fillrandom -threads=64 -batch_size=1\n-memtablerep=skip_list -value_size=100 --num=100000\nlevel0_slowdown_writes_trigger=9999 -level0_stop_writes_trigger=9999\n-disable_auto_compactions --max_write_buffer_number=8 -max_background_flushes=8\n--disable_wal --write_buffer_size=160000000 --block_size=16384\n--allow_concurrent_memtable_write -compression_type none\n```\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/10118\n\nReviewed By: jay-zhuang\n\nDifferential Revision: D37120578\n\nfbshipit-source-id: c20bde4298222edfab7ff7cb6d42497e7012400d",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/2e5a323dbd4dbfad5b1e3d45d489e6dca37f4257",
         "modified_files": [
             "port/port_posix.h"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/2e5a323dbd4dbfad5b1e3d45d489e6dca37f4257",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "AsmVolatilePause"
         ]
     },
     {
-        "hash": "1ca1562e3565ac3d9ccfeeec2e206a21791f3aa3",
-        "author": "Mark Callaghan",
-        "date": "2022-03-21T17:30:51-07:00",
-        "message": "Make mixgraph easier to use (#9711)\n\nSummary:\nChanges:\n* improves monitoring by displaying average size of a Put value and average scan length\n* forces the minimum value size to be 10. Before this it was 0 if you didn't set the distribution parameters.\n* uses reasonable defaults for the distribution parameters that determine value size and scan length\n* includes seeks in \"reads ... found\" message, before this they were missing\n\nThis is for https://github.com/facebook/rocksdb/issues/9672\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/9711\n\nTest Plan:\nBefore this change:\n\n./db_bench --benchmarks=fillseq,mixgraph --mix_get_ratio=50 --mix_put_ratio=25 --mix_seek_ratio=25 --num=100000 --value_k=0.2615 --value_sigma=25.45 --iter_k=2.517 --iter_sigma=14.236\nfillseq      :       4.289 micros/op 233138 ops/sec;   25.8 MB/s\nmixgraph     :      18.461 micros/op 54166 ops/sec;  755.0 MB/s ( Gets:50164 Puts:24919 Seek:24917 of 50164 in 75081 found)\n\nAfter this change:\n\n./db_bench --benchmarks=fillseq,mixgraph --mix_get_ratio=50 --mix_put_ratio=25 --mix_seek_ratio=25 --num=100000 --value_k=0.2615 --value_sigma=25.45 --iter_k=2.517 --iter_sigma=14.236\nfillseq      :       3.974 micros/op 251553 ops/sec;   27.8 MB/s\nmixgraph     :      16.722 micros/op 59795 ops/sec;  833.5 MB/s ( Gets:50164 Puts:24919 Seek:24917, reads 75081 in 75081 found, avg size: 36.0 value, 504.9 scan)\n\nReviewed By: jay-zhuang\n\nDifferential Revision: D35030190\n\nPulled By: mdcallag\n\nfbshipit-source-id: d8f555f28d869f752ddb674a524108884511b151",
-        "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/1ca1562e3565ac3d9ccfeeec2e206a21791f3aa3",
-        "modified_files": [
-            "tools/db_bench_tool.cc"
-        ]
-    },
-    {
-        "hash": "1861de455eede00202576bc5432787e9ee50a376",
-        "author": "Mammo, Mulugeta",
-        "date": "2020-11-16T13:06:30-08:00",
-        "message": "Add arena_block_size flag to db_bench (#7654)\n\nSummary:\ndb_bench currently does not allow overriding the default `arena_block_size `calculation ([memtable size/8](https://github.com/facebook/rocksdb/blob/master/db/column_family.cc#L216)). For memtables whose size is in gigabytes, the `arena_block_size` defaults to hundreds of megabytes (affecting performance).\n\nExposing this option in db_bench would allow us to test the workloads with various `arena_block_size` values.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/7654\n\nReviewed By: jay-zhuang\n\nDifferential Revision: D24996812\n\nPulled By: ajkr\n\nfbshipit-source-id: a5e3d2c83d9f89e1bb8382f2e8dd476c79e33bef",
-        "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/1861de455eede00202576bc5432787e9ee50a376",
-        "modified_files": [
-            "tools/db_bench_tool.cc"
-        ]
-    },
-    {
-        "hash": "9b3c9ef0e8a0019394d0bc6c2e271cddb1da4617",
+        "hash": "f053851af643755dc2ee252f92e3853b30a12be3",
         "author": "sdong",
-        "date": "2020-03-02T11:55:28-08:00",
-        "message": "Add --index_with_first_key and --index_shortening_mode to DB bench (#5859)\n\nSummary:\nSome combinatino of --index_with_first_key and --index_shortening_mode can signifcantly improve performance for large values. Expose them in db_bench.\nPull Request resolved: https://github.com/facebook/rocksdb/pull/5859\n\nTest Plan: Run them with the new options and observe the behavior.\n\nDifferential Revision: D20104434\n\nfbshipit-source-id: 21d48a732a9caf20b82312c7d7557d747ea3c304",
+        "date": "2021-10-19T12:48:18-07:00",
+        "message": "Ignore non-overlapping levels when determinig grandparent files (#9051)\n\nSummary:\nRight now, when picking a compaction, grand parent files are from output_level + 1. This usually works, but if the level doesn't have any overlapping file, it will be more efficient to go further down. This is because the files are likely to be trivial moved further and might create a violation of max_compaction_bytes. This situation can naturally happen and might happen even more with TTL compactions. There is no harm to fix it.\n\nPull Request resolved: https://github.com/facebook/rocksdb/pull/9051\n\nTest Plan: Run existing tests and see it passes. Also briefly run crash test.\n\nReviewed By: ajkr\n\nDifferential Revision: D31748829\n\nfbshipit-source-id: 52b99ab4284dc816d22f34406d528a3c98ff6719",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/9b3c9ef0e8a0019394d0bc6c2e271cddb1da4617",
         "modified_files": [
-            "tools/db_bench_tool.cc"
+            "db/compaction/compaction_picker.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/f053851af643755dc2ee252f92e3853b30a12be3",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "CompactionPicker::GetGrandparents"
         ]
     },
     {
-        "hash": "26293c89a65625c34f362385779358cb16905e38",
-        "author": "DaiZhiwei",
-        "date": "2019-08-23T11:04:08-07:00",
-        "message": "crc32c_arm64 performance optimization (#5675)\n\nSummary:\nCrc32c Parallel computation coding optimization:\nMacro unfolding removes the \"for\" loop and is good to decrease branch-miss in arm64 micro architecture\n1024 Bytes is divided into  8(head) + 1008( 6 * 7 * 3 * 8 ) + 8(tail)  three parts\nMacro unfolding 42 loops to 6 CRC32C7X24BYTESs\n1 CRC32C7X24BYTES containing 7 CRC32C24BYTESs\n\n1, crc32c_test\n[==========] Running 4 tests from 1 test case.\n[----------] Global test environment set-up.\n[----------] 4 tests from CRC\n[ RUN      ] CRC.StandardResults\n[       OK ] CRC.StandardResults (1 ms)\n[ RUN      ] CRC.Values\n[       OK ] CRC.Values (0 ms)\n[ RUN      ] CRC.Extend\n[       OK ] CRC.Extend (0 ms)\n[ RUN      ] CRC.Mask\n[       OK ] CRC.Mask (0 ms)\n[----------] 4 tests from CRC (1 ms total)\n\n[----------] Global test environment tear-down\n[==========] 4 tests from 1 test case ran. (1 ms total)\n[  PASSED  ] 4 tests.\n\n2, db_bench --benchmarks=\"crc32c\"\ncrc32c : 0.218 micros/op 4595390 ops/sec; 17950.7 MB/s (4096 per op)\n\n3, repeated crc32c_test case  60000 times\nperf stat -e branch-miss -- ./crc32c_test\nbefore optimization:\n739,426,504      branch-miss\nafter optimization:\n1,128,572      branch-miss\nPull Request resolved: https://github.com/facebook/rocksdb/pull/5675\n\nDifferential Revision: D16989210\n\nfbshipit-source-id: 7204e6069bb6ed066d49c2d1b3ac385065a98557",
+        "hash": "3f89af1c39da4991ef6c544fc5e3f164a688b375",
+        "author": "Levi Tamasi",
+        "date": "2019-07-26T15:53:34-07:00",
+        "message": "Reduce the number of random iterations in compact_on_deletion_collector_test (#5635)\n\nSummary:\nThis test frequently times out under TSAN; reducing the number of random\niterations to make it complete faster.\nPull Request resolved: https://github.com/facebook/rocksdb/pull/5635\n\nTest Plan: buck test mode/dev-tsan internal_repo_rocksdb/repo:compact_on_deletion_collector_test\n\nDifferential Revision: D16523505\n\nPulled By: ltamasi\n\nfbshipit-source-id: 6a69909bce9d204c891150fcb3d536547b3253d0",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/26293c89a65625c34f362385779358cb16905e38",
         "modified_files": [
-            "util/crc32c_arm64.cc"
+            "utilities/table_properties_collectors/compact_on_deletion_collector_test.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/3f89af1c39da4991ef6c544fc5e3f164a688b375",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "main"
+        ]
+    },
+    {
+        "hash": "821887036e5235c827029d14decb185bea01ec4b",
+        "author": "Andrew Kryczka",
+        "date": "2017-10-03T16:27:28-07:00",
+        "message": "pin L0 filters/indexes for compaction outputs\n\nSummary:\nWe need to tell the iterator the compaction output file's level so it can apply proper optimizations, like pinning filter and index blocks when user enables `pin_l0_filter_and_index_blocks_in_cache` and the output file's level is zero.\nCloses https://github.com/facebook/rocksdb/pull/2949\n\nDifferential Revision: D5945597\n\nPulled By: ajkr\n\nfbshipit-source-id: 2389decf9026ffaa32d45801a77d002529f64a62",
+        "modified_files_count": 1,
+        "modified_files": [
+            "db/compaction_job.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/821887036e5235c827029d14decb185bea01ec4b",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "CompactionJob::FinishCompactionOutputFile"
+        ]
+    },
+    {
+        "hash": "025b85b4ac078110302c039556e4c12ba8e7a731",
+        "author": "Andrew Kryczka",
+        "date": "2017-09-12T11:26:47-07:00",
+        "message": "speedup DBTest.EncodeDecompressedBlockSizeTest\n\nSummary:\nit sometimes takes more than 10 minutes (i.e., times out) on our internal CI. mainly because bzip is super slow. so I reduced the amount of  work it tries to do.\nCloses https://github.com/facebook/rocksdb/pull/2856\n\nDifferential Revision: D5795883\n\nPulled By: ajkr\n\nfbshipit-source-id: e69f986ae60b44ecc26b6b024abd0f13bdf3a3c5",
+        "modified_files_count": 1,
+        "modified_files": [
+            "db/db_test.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/025b85b4ac078110302c039556e4c12ba8e7a731",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "TEST_F"
         ]
     },
     {
@@ -104,9 +209,32 @@
         "date": "2017-08-05T00:15:35-07:00",
         "message": "Optimize range-delete aggregator call in merge helper.\n\nSummary:\nIn the condition:\n```\nif (range_del_agg != nullptr &&\n    range_del_agg->ShouldDelete(\n        iter->key(),\n        RangeDelAggregator::RangePositioningMode::kForwardTraversal) &&\n    filter != CompactionFilter::Decision::kRemoveAndSkipUntil) {\n...\n}\n```\nit could be possible that all the work done in `range_del_agg->ShouldDelete` is wasted due to not having the right `filter` value later on.\nInstead, check `filter` value before even calling `range_del_agg->ShouldDelete`, which is a much more involved function.\nCloses https://github.com/facebook/rocksdb/pull/2690\n\nDifferential Revision: D5568931\n\nPulled By: sagar0\n\nfbshipit-source-id: 17512d52360425c7ae9de7675383f5d7bc3dad58",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/20dc5e74f276bdcb26c44c13bced506a2d920d3f",
         "modified_files": [
             "db/merge_helper.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/20dc5e74f276bdcb26c44c13bced506a2d920d3f",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "MergeHelper::MergeUntil"
+        ]
+    },
+    {
+        "hash": "18eeb7b90e45af4bbac0777021711d8547f41eca",
+        "author": "Mike Kolupaev",
+        "date": "2017-02-21T16:09:10-08:00",
+        "message": "Fix interference between max_total_wal_size and db_write_buffer_size checks\n\nSummary:\nThis is a trivial fix for OOMs we've seen a few days ago in logdevice.\n\nRocksDB get into the following state:\n(1) Write throughput is too high for flushes to keep up. Compactions are out of the picture - automatic compactions are disabled, and for manual compactions we don't care that much if they fall behind. We write to many CFs, with only a few L0 sst files in each, so compactions are not needed most of the time.\n(2) total_log_size_ is consistently greater than GetMaxTotalWalSize(). It doesn't get smaller since flushes are falling ever further behind.\n(3) Total size of memtables is way above db_write_buffer_size and keeps growing. But the write_buffer_manager_->ShouldFlush() is not checked because (2) prevents it (for no good reason, afaict; this is what this commit fixes).\n(4) Every call to WriteImpl() hits the MaybeFlushColumnFamilies() path. This keeps flushing the memtables one by one in order of increasing log file number.\n(5) No write stalling trigger is hit. We rely on max_write_buffer_number\nCloses https://github.com/facebook/rocksdb/pull/1893\n\nDifferential Revision: D4593590\n\nPulled By: yiwu-arbug\n\nfbshipit-source-id: af79c5f",
+        "modified_files_count": 1,
+        "modified_files": [
+            "db/db_impl.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/18eeb7b90e45af4bbac0777021711d8547f41eca",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "DBImpl::WriteImpl"
         ]
     },
     {
@@ -115,20 +243,15 @@
         "date": "2017-01-24T13:24:14-08:00",
         "message": "Test range deletion block outlives table reader\n\nSummary:\nThis test ensures RangeDelAggregator can still access blocks even if it outlives the table readers that created them (detailed description in comments).\n\nI plan to optimize away the extra cache lookup we currently do in BlockBasedTable::NewRangeTombstoneIterator(), as it is ~5% CPU in my random read benchmark in a database with 1k tombstones. This test will help make sure nothing breaks in the process.\nCloses https://github.com/facebook/rocksdb/pull/1739\n\nDifferential Revision: D4375954\n\nPulled By: ajkr\n\nfbshipit-source-id: aef9357",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/d438e1ec174bdf1474edcdf9902fe3cb14b8a1e2",
         "modified_files": [
             "db/db_range_del_test.cc"
-        ]
-    },
-    {
-        "hash": "8c71eb5afce8917db9ad78bb4fac136427891b99",
-        "author": "Islam AbdelRahman",
-        "date": "2016-01-07T07:59:14-08:00",
-        "message": "Optimize DBIter::Prev() by reducing stack overhead\n\nSummary:\nIt looks like we are spending significant amount of time creating std::deque<std::string> every time we do Iterator::Prev()\n\n{F921567}\n\nBy using merge_operands_ as a DBIter data member w create it once and reduce this overhead and see ~30% performance improvement when using Iterator::Prev() on hot data\n\nOrignal performance\n\n```\nDEBUG_LEVEL=0 make db_bench -j64 && ./db_bench --benchmarks=\"readreverse\" --db=\"/dev/shm/bench_prev_opt/\" --use_existing_db --disable_auto_compactions\nreadreverse  :       0.713 micros/op 1402219 ops/sec;  155.1 MB/s\nreadreverse  :       0.609 micros/op 1641386 ops/sec;  181.6 MB/s\nreadreverse  :       0.684 micros/op 1461150 ops/sec;  161.6 MB/s\nreadreverse  :       0.629 micros/op 1589842 ops/sec;  175.9 MB/s\nreadreverse  :       0.647 micros/op 1544530 ops/sec;  170.9 MB/s\n```\n\nAfter optimization\n\n```\nDEBUG_LEVEL=0 make db_bench -j64 && ./db_bench --benchmarks=\"readreverse\" --db=\"/dev/shm/bench_prev_opt/\" --use_existing_db --disable_auto_compactions\nreadreverse  :       0.488 micros/op 2051189 ops/sec;  226.9 MB/s\nreadreverse  :       0.505 micros/op 1980892 ops/sec;  219.1 MB/s\nreadreverse  :       0.541 micros/op 1846971 ops/sec;  204.3 MB/s\nreadreverse  :       0.497 micros/op 2013612 ops/sec;  222.8 MB/s\nreadreverse  :       0.480 micros/op 2082665 ops/sec;  230.4 MB/s\n```\n\nTest Plan: make check -j64\n\nReviewers: sdong, anthony, rven, igor, yhchiang\n\nReviewed By: yhchiang\n\nSubscribers: jkedgar, dhruba\n\nDifferential Revision: https://reviews.facebook.net/D52563",
-        "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/8c71eb5afce8917db9ad78bb4fac136427891b99",
-        "modified_files": [
-            "db/db_iter.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/d438e1ec174bdf1474edcdf9902fe3cb14b8a1e2",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "TEST_F"
         ]
     },
     {
@@ -137,20 +260,49 @@
         "date": "2017-01-11T10:54:37-08:00",
         "message": "Performance: Iterate vector by reference\n\nSummary: Closes https://github.com/facebook/rocksdb/pull/1763\n\nDifferential Revision: D4398796\n\nPulled By: yiwu-arbug\n\nfbshipit-source-id: b82636d",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/9f246298e2f0af3973918a0dac0c5f46bc0993c0",
         "modified_files": [
             "db/event_helpers.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/9f246298e2f0af3973918a0dac0c5f46bc0993c0",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "EventHelpers::LogAndNotifyTableFileDeletion"
         ]
     },
     {
-        "hash": "9790b94c924453cea4d230a0f40edf02015f71e8",
-        "author": "Mark Callaghan",
-        "date": "2016-05-05T07:32:10-07:00",
-        "message": "Add optimize_filters_for_hits option to db_bench\n\nSummary:\nAdd optimize_filters_for_hits option to db_bench\n\nTask ID: #\n\nBlame Rev:\n\nTest Plan:\nrun db_bench\n\nRevert Plan:\n\nDatabase Impact:\n\nMemcache Impact:\n\nOther Notes:\n\nEImportant:\n\n- begin *PUBLIC* platform impact section -\nBugzilla: #\n- end platform impact -\n\nReviewers: sdong\n\nReviewed By: sdong\n\nSubscribers: andrewkr, dhruba\n\nDifferential Revision: https://reviews.facebook.net/D57621",
+        "hash": "e94eea4527f2d7de82a6bf3303177977011e5dd9",
+        "author": "Haobo Xu",
+        "date": "2013-12-20T16:29:05-08:00",
+        "message": "[RocksDB] [Performance Branch] Minor fix, Remove string resize from WriteBatch::Clear\n\nSummary: tmp_batch_ will get re-allocated for every merged write batch because of the existing resize in WriteBatch::Clear. Note that in DBImpl::BuildBatchGroup, we have a hard coded upper limit of batch size 1<<20 = 1MB already.\n\nTest Plan: make check\n\nReviewers: dhruba, sdong\n\nCC: leveldb\n\nDifferential Revision: https://reviews.facebook.net/D14787",
         "modified_files_count": 1,
-        "github_commit_url": "https://github.com/facebook/rocksdb/commit/9790b94c924453cea4d230a0f40edf02015f71e8",
         "modified_files": [
-            "tools/db_bench_tool.cc"
+            "db/write_batch.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/e94eea4527f2d7de82a6bf3303177977011e5dd9",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "WriteBatch::Clear"
+        ]
+    },
+    {
+        "hash": "e8ab1934d9cb3ffebd61097d67bb23439554b265",
+        "author": "Siying Dong",
+        "date": "2013-12-12T11:30:00-08:00",
+        "message": "[RocksDB Performance Branch] DBImpl.NewInternalIterator() to reduce works inside mutex\n\nSummary: To reduce mutex contention caused by DBImpl.NewInternalIterator(), in this function, move all the iteration creation works out of mutex, only leaving object ref and get.\n\nTest Plan:\nmake all check\nwill run db_stress for a while too to make sure no problem.\n\nReviewers: haobo, dhruba, kailiu\n\nReviewed By: haobo\n\nCC: igor, leveldb\n\nDifferential Revision: https://reviews.facebook.net/D14589",
+        "modified_files_count": 1,
+        "modified_files": [
+            "db/db_impl.cc"
+        ],
+        "github_commit_url": "https://github.com/facebook/rocksdb/commit/e8ab1934d9cb3ffebd61097d67bb23439554b265",
+        "contains_optimization_keyword": true,
+        "modified_func_count": 1,
+        "modified_other": false,
+        "modified_func": [
+            "DBImpl::NewInternalIterator"
         ]
     }
 ]
