@@ -248,6 +248,10 @@
 
 尝试组合不同论文中的技术，或改进现有技术，判断效果是否有所提升。
 
+PIE: https://github.com/LearningOpt/pie
+
+SBLLM: https://github.com/shuzhenggao/sbllm
+
 
 ## TODO
 
