@@ -64,11 +64,18 @@
 
 #### 1.1.1 - 尝试使用 api 来调用大模型
 
-使用组内的[大模型门户](https://llm.xmcp.ltd/)来获取 api key，目前可以调用 DeepSeek、通义千问、OpenAI 等模型，每位同学的限额是每月100刀。组内统一报销费用，只能用于自己的科研轮转项目，不能转借或者倒卖。
+我们组使用[大模型门户](https://llm.xmcp.ltd/)来调用各类模型，包括 Claude、OpenAI、DeepSeek、通义千问 等模型，每位同学的限额是每月100刀。组内统一报销费用，只能用于自己的科研轮转项目，不能转借或者倒卖。
 
-`test_api.py` 中是一个简单的大模型调用示例。
-你需要先创建 `config.py` 文件，将大模型调用相关的变量（包括 `xmcp_base_url`, `xmcp_api_key`, `xmcp_model`）放在里面。注意保护好自己的 api key，防止泄露。如果要在 GitHub 上存放项目，注意不要将 api key 同步更新上去。如果发现 api key 有可能已经泄露，请立刻联系管理员充值秘钥。
-然后你可以使用 `python test_api.py` 来运行 `test_api.py`。
+你需要先修改根目录下的 `config.py` 文件，其中包括以下变量：
+- `GITHUB_TOKEN`：使用 GitHub api 时需要的配置，在 GitHub - Settings - Developer Settings - Personal access tokens - Tokens (classic) 中生成一个然后复制进来就行
+- `root_path`：项目代码所在的根目录的路径
+- `xmcp_base_url`：调用大模型相关，在大模型门户上的“API 调用秘钥/BASE_URL”一栏获取，已设置好
+- `xmcp_api_key`：调用大模型相关，在大模型门户上的“API 调用秘钥/API_KEY”一栏获取自己账号的 api key 并放到这里
+- `xmcp_model`：调用大模型相关，在大模型门户上查看模型列表，选择想要调用的模型，然后将“模型名称”复制到这里，例如 `ali/deepseek-v3`
+
+注意保护好自己的 api key，防止泄露。如果要在 GitHub 上存放项目，注意不要将 api key 同步更新上去。如果发现 api key 有可能已经泄露，请立刻联系管理员重置秘钥。
+
+`part1/test_api.py` 中是一个简单的大模型调用示例。设置好 `config.py` 后，你可以使用 `python test_api.py` 来运行 `test_api.py`。
 
 
 #### 1.1.2 - 了解 api 相关的设置
@@ -89,7 +96,7 @@
 - 上下文硬盘缓存：https://api-docs.deepseek.com/zh-cn/guides/kv_cache
 - ...
 
-尝试编写脚本来通过 api 调用大模型，尝试调整输入的参数以及获取输出的各类信息。
+尝试基于 `test_api.py` 来调用大模型并解决简单的问题，尝试调整输入的参数以及获取输出的各类信息。
 
 
 ### 1.2 - 了解提示工程技术
@@ -255,6 +262,4 @@ SBLLM: https://github.com/shuzhenggao/sbllm
 
 ## TODO
 
-- 完善提示工程中的主要技术
 - 完善part2，例如给出具体用于优化的commit等
-- 考虑每个part新建一个文件，将readme拆分到不同文件中？
